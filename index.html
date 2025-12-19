@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos de Adafruit IO</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .data-container {
+            background: white;
+            width: 300px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .valor {
+            font-size: 3rem;
+            color: #27ae60;
+        }
+
+        .humedad {
+            color: #2980b9;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>Monitoreo de Datos Adafruit IO</h1>
+</header>
+
+<main>
+
+    <div class="container">
+
+        <!-- TEMPERATURA -->
+        <div class="data-container">
+            <h2>Temperatura</h2>
+            <p id="temperatura-valor" class="valor">--</p>
+            <p>Última actualización:<br><span id="temp-time">--</span></p>
+        </div>
+
+        <!-- HUMEDAD -->
+        <div class="data-container">
+            <h2>Humedad</h2>
+            <p id="humedad-valor" class="valor humedad">--</p>
+            <p>Última actualización:<br><span id="hum-time">--</span></p>
+        </div>
+
+    </div>
+
+    <button onclick="obtenerDatos()">Actualizar ahora</button>
+
+    <div id="error-message" class="error-message"></div>
+
+</main>
+
+<script>
+    // 🔴 TUS DATOS (correctos)
+    const USERNAME = "yair_electronica";
+    const AIO_KEY = "aio_GelR82LMPZ475iLPaKHEV23tZgGk";
+
+    const FEED_TEMP = "temperatura";
+    const FEED_HUM = "humedad";
+
+    async function leerFeed(feed) {
+        const url = `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${feed}/data/last`;
+
+        const response = await fetch(url, {
+            headers: { "X-AIO-Key": AIO_KEY }
+        });
+
+        if (!response.ok) {
+            throw new Error("Error en feed: " + feed);
+        }
+
+        return response.json();
+    }
+
+    async function obtenerDatos() {
+        try {
+            const temp = await leerFeed(FEED_TEMP);
+            const hum = await leerFeed(FEED_HUM);
+
+            document.getElementById("temperatura-valor").innerText =
+                temp.value + " °C";
+
+            document.getElementById("humedad-valor").innerText =
+                hum.value + " %";
+
+            document.getElementById("temp-time").innerText =
+                new Date(temp.created_at).toLocaleString();
+
+            document.getElementById("hum-time").innerText =
+                new Date(hum.created_at).toLocaleString();
+
+            document.getElementById("error-message").innerText = "";
+
+        } catch (error) {
+            document.getElementById("error-message").innerText =
+                "Error al obtener los datos";
+            console.error(error);
+        }
+    }
+
+    // 🔄 Carga automática
+    obtenerDatos();
+    setInterval(obtenerDatos, 10000);
+</script>
+
+</body>
+</html>
