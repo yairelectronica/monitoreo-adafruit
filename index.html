@@ -2,23 +2,25 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Adafruit IO - Temperatura y Humedad</title>
+    <title>Temperatura y Humedad - Adafruit IO</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             text-align: center;
-            background: #f2f2f2;
             padding: 40px;
         }
         .card {
             background: white;
-            width: 300px;
-            margin: 15px auto;
             padding: 20px;
+            margin: 10px auto;
+            width: 300px;
             border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .value {
             font-size: 2em;
+            color: #333;
         }
     </style>
 </head>
@@ -38,25 +40,35 @@
 
     <script>
         const USERNAME = "yair_electronica";
+        const AIO_KEY = "aio_hfgX09kpU7quzSQuar5nLmkCtRwx";
+
+        const TEMP_FEED = "temperatura";
+        const HUM_FEED = "humedad";
 
         async function obtenerDato(feed, elemento, unidad) {
             const url = `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${feed}/data/last`;
-            const respuesta = await fetch(url);
+
+            const respuesta = await fetch(url, {
+                headers: {
+                    "X-AIO-Key": AIO_KEY
+                }
+            });
+
             const datos = await respuesta.json();
             document.getElementById(elemento).innerText =
                 datos.value + " " + unidad;
         }
 
-        function actualizar() {
-            obtenerDato("temperatura", "temp", "°C");
-            obtenerDato("humedad", "hum", "%");
+        function actualizarDatos() {
+            obtenerDato(TEMP_FEED, "temp", "°C");
+            obtenerDato(HUM_FEED, "hum", "%");
         }
 
-        actualizar();
-        setInterval(actualizar, 5000);
+        // Actualiza cada 5 segundos
+        actualizarDatos();
+        setInterval(actualizarDatos, 5000);
     </script>
 
 </body>
 </html>
-
 
