@@ -2,25 +2,23 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Temperatura y Humedad - Adafruit IO</title>
+    <title>Adafruit IO - Temperatura y Humedad</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             text-align: center;
+            background: #f2f2f2;
             padding: 40px;
         }
         .card {
             background: white;
-            padding: 20px;
-            margin: 10px auto;
             width: 300px;
+            margin: 15px auto;
+            padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .value {
             font-size: 2em;
-            color: #333;
         }
     </style>
 </head>
@@ -39,36 +37,26 @@
     </div>
 
     <script>
-        const USERNAME = "TU_USUARIO_ADAFRUIT";
-        const AIO_KEY = "TU_AIO_KEY";
-
-        const TEMP_FEED = "temperatura";
-        const HUM_FEED = "humedad";
+        const USERNAME = "yair_electronica";
 
         async function obtenerDato(feed, elemento, unidad) {
             const url = `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${feed}/data/last`;
-
-            const respuesta = await fetch(url, {
-                headers: {
-                    "X-AIO-Key": AIO_KEY
-                }
-            });
-
+            const respuesta = await fetch(url);
             const datos = await respuesta.json();
             document.getElementById(elemento).innerText =
                 datos.value + " " + unidad;
         }
 
-        function actualizarDatos() {
-            obtenerDato(TEMP_FEED, "temp", "°C");
-            obtenerDato(HUM_FEED, "hum", "%");
+        function actualizar() {
+            obtenerDato("temperatura", "temp", "°C");
+            obtenerDato("humedad", "hum", "%");
         }
 
-        // Actualiza cada 5 segundos
-        actualizarDatos();
-        setInterval(actualizarDatos, 5000);
+        actualizar();
+        setInterval(actualizar, 5000);
     </script>
 
 </body>
 </html>
+
 
