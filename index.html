@@ -1,72 +1,85 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Temperatura y Humedad - Adafruit IO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperatura y Humedad - Firebase</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background: #f2f2f2;
             text-align: center;
-            padding: 40px;
+            padding: 20px;
         }
         .card {
             background: white;
-            padding: 20px;
-            margin: 10px auto;
-            width: 300px;
+            padding: 25px;
+            margin: 15px auto;
+            width: 250px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0px 0px 10px #ccc;
         }
-        .value {
-            font-size: 2em;
-            color: #333;
+        h1 {
+            margin-bottom: 30px;
+        }
+        .valor {
+            font-size: 28px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <h1>Datos desde Adafruit IO</h1>
+    <h1>Datos desde Firebase</h1>
 
     <div class="card">
-        <h2>🌡️ Temperatura</h2>
-        <div id="temp" class="value">-- °C</div>
+        <h2>Temperatura</h2>
+        <div id="temp" class="valor">-- °C</div>
     </div>
 
     <div class="card">
-        <h2>💧 Humedad</h2>
-        <div id="hum" class="value">-- %</div>
+        <h2>Humedad</h2>
+        <div id="hum" class="valor">-- %</div>
     </div>
 
     <script>
-        const USERNAME = "yair_electronica";
-        const AIO_KEY = "aio_pLbQ429F96IQtwYjLNceu1txJDma";
+        // ✔ Tu configuración REAL de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWbcsCe8tnVR1o5cG3hJHEGs4aTeegRKU",
+            authDomain: "databasepic-a8977.firebaseapp.com",
+            databaseURL: "https://databasepic-a8977-default-rtdb.firebaseio.com",
+            projectId: "databasepic-a8977",
+            storageBucket: "databasepic-a8977.firebasestorage.app",
+            messagingSenderId: "890321833852",
+            appId: "1:890321833852:web:0904650852e0ecd1d9def9"
+        };
 
-        const TEMP_FEED = "temperatura";
-        const HUM_FEED = "humedad";
-
-        async function obtenerDato(feed, elemento, unidad) {
-            const url = `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${feed}/data/last`;
-
-            const respuesta = await fetch(url, {
-                headers: {
-                    "X-AIO-Key": AIO_KEY
-                }
-            });
-
-            const datos = await respuesta.json();
-            document.getElementById(elemento).innerText =
-                datos.value + " " + unidad;
-        }
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         function actualizarDatos() {
-            obtenerDato(TEMP_FEED, "temp", "°C");
-            obtenerDato(HUM_FEED, "hum", "%");
+
+            // 🔥 Leer Temperatura
+            db.ref("temperatura").on("value", (snapshot) => {
+                const temp = snapshot.val();
+                document.getElementById("temp").innerText = temp + " °C";
+            });
+
+            // 🔥 Leer Humedad
+            db.ref("humedad").on("value", (snapshot) => {
+                const hum = snapshot.val();
+                document.getElementById("hum").innerText = hum + " %";
+            });
         }
 
-        // Actualiza cada 5 segundos
         actualizarDatos();
-        setInterval(actualizarDatos, 5000);
     </script>
 
 </body>
