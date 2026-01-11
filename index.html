@@ -139,19 +139,18 @@
         options: { responsive: true }
     });
 
-    // Lectura en tiempo real
-    db.ref("temperatura").on("value", snap => {
+    // ---------------------- LECTURA EN TIEMPO REAL -----------------------
+    db.ref("Actual/temperatura").on("value", snap => {
         let temp = snap.val();
         document.getElementById("temp").innerText = temp + " °C";
 
         let hora = new Date().toLocaleTimeString();
-
         rtChart.data.labels.push(hora);
         rtChart.data.datasets[0].data.push(temp);
         rtChart.update();
     });
 
-    db.ref("humedad").on("value", snap => {
+    db.ref("Actual/humedad").on("value", snap => {
         let hum = snap.val();
         document.getElementById("hum").innerText = hum + " %";
 
@@ -191,7 +190,10 @@
         let fecha = document.getElementById("fechaSeleccion").value;
         if (!fecha) return;
 
-        db.ref("historial/" + fecha).once("value", snap => {
+        let partes = fecha.split("-");
+        let ruta = `Historial/${partes[0]}/${partes[1]}/${partes[2]}`;
+
+        db.ref(ruta).once("value", snap => {
             const data = snap.val();
             if (!data) {
                 alert("No hay datos para esta fecha.");
@@ -218,5 +220,6 @@
 
 </body>
 </html>
+
 
 
