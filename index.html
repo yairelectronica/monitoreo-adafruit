@@ -1,167 +1,222 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard PIC – Firebase</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard PIC – Firebase</title>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: #eaf2f8;
-            padding: 20px;
-            text-align: center;
-        }
+<style>
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(180deg, #dff1ff, #b5d9ff);
+        padding: 20px;
+        text-align: center;
+    }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
+    h1 { color: #2c3e50; }
 
-        .contenedor {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
+    .contenedor {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
 
-        .card {
-            width: 250px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
-            transition: transform .2s;
-        }
+    .card {
+        width: 250px;
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.15);
+    }
 
-        .card:hover {
-            transform: scale(1.05);
-        }
+    .valor {
+        font-size: 40px;
+        margin-top: 10px;
+        font-weight: bold;
+    }
 
-        .valor {
-            font-size: 40px;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
+    .panel {
+        margin: 40px auto;
+        width: 95%;
+        max-width: 900px;
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+    }
 
-        #chartContainer {
-            margin: 40px auto;
-            width: 90%;
-            max-width: 700px;
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
-        }
-    </style>
+    .selector-fecha {
+        margin: 10px 0;
+        font-size: 18px;
+        padding: 8px;
+    }
+</style>
+
 </head>
 <body>
 
-    <h1> Temperatura y Humedad</h1>
-    <h3>Datos en tiempo real desde Firebase</h3>
+<h1>Dashboard de Temperatura y Humedad</h1>
+<h3>Datos en tiempo real desde Firebase</h3>
 
-    <div class="contenedor">
-        <div class="card">
-            <h2>🌡 Temperatura</h2>
-            <div id="temp" class="valor">-- °C</div>
-        </div>
-
-        <div class="card">
-            <h2>💧 Humedad</h2>
-            <div id="hum" class="valor">-- %</div>
-        </div>
+<div class="contenedor">
+    <div class="card">
+        <h2>🌡 Temperatura</h2>
+        <div id="temp" class="valor">-- °C</div>
     </div>
 
-    <!-- Gráfico -->
-    <div id="chartContainer">
-        <h2>📊 Gráfico en Tiempo Real</h2>
-        <canvas id="myChart"></canvas>
+    <div class="card">
+        <h2>💧 Humedad</h2>
+        <div id="hum" class="valor">-- %</div>
     </div>
+</div>
 
+<!-- GRÁFICO EN TIEMPO REAL -->
+<div class="panel">
+    <h2>📊 Gráfico en Tiempo Real</h2>
+    <canvas id="chartRealtime"></canvas>
+</div>
 
-    <script>
-        // 🔥 Configuración Firebase (TU CONFIG)
-        const firebaseConfig = {
-            apiKey: "AIzaSyCWbcsCe8tnVR1o5cG3hJHEGs4aTeegRKU",
-            authDomain: "databasepic-a8977.firebaseapp.com",
-            databaseURL: "https://databasepic-a8977-default-rtdb.firebaseio.com",
-            projectId: "databasepic-a8977",
-            storageBucket: "databasepic-a8977.firebasestorage.app",
-            messagingSenderId: "890321833852",
-            appId: "1:890321833852:web:0904650852e0ecd1d9def9"
-        };
+<!-- SELECTOR DE FECHA -->
+<div class="panel">
+    <h2>📅 Ver historial por día</h2>
+    <input type="date" id="fechaSeleccion" class="selector-fecha" onchange="cargarHistorial()">
+</div>
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<!-- GRÁFICO DE HISTORIAL -->
+<div class="panel">
+    <h2>📊 Historial del Día Seleccionado</h2>
+    <canvas id="chartHistorial"></canvas>
+</div>
 
-        // --------------- Gráfico ------------------
-        const ctx = document.getElementById("myChart").getContext("2d");
+<script>
+    // Configuración Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWbcsCe8tnVR1o5cG3hJHEGs4aTeegRKU",
+        authDomain: "databasepic-a8977.firebaseapp.com",
+        databaseURL: "https://databasepic-a8977-default-rtdb.firebaseio.com",
+        projectId: "databasepic-a8977",
+        storageBucket: "databasepic-a8977.firebasestorage.app",
+        messagingSenderId: "890321833852",
+        appId: "1:890321833852:web:0904650852e0ecd1d9def9"
+    };
 
-        const chart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: "Temperatura (°C)",
-                        data: [],
-                        borderWidth: 3,
-                        fill: false,
-                        borderColor: "#e74c3c"
-                    },
-                    {
-                        label: "Humedad (%)",
-                        data: [],
-                        borderWidth: 3,
-                        fill: false,
-                        borderColor: "#3498db"
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 300
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ---------------------- GRÁFICO EN TIEMPO REAL -----------------------
+    const rtChart = new Chart(document.getElementById("chartRealtime"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Temperatura (°C)",
+                    data: [],
+                    borderColor: "#e74c3c",
+                    backgroundColor: "rgba(231,76,60,0.2)",
+                    fill: true,
+                    tension: 0.3
                 },
-                scales: {
-                    y: { beginAtZero: true }
+                {
+                    label: "Humedad (%)",
+                    data: [],
+                    borderColor: "#3498db",
+                    backgroundColor: "rgba(52,152,219,0.2)",
+                    fill: true,
+                    tension: 0.3
                 }
+            ]
+        },
+        options: { responsive: true }
+    });
+
+    // Lectura en tiempo real
+    db.ref("temperatura").on("value", snap => {
+        let temp = snap.val();
+        document.getElementById("temp").innerText = temp + " °C";
+
+        let hora = new Date().toLocaleTimeString();
+
+        rtChart.data.labels.push(hora);
+        rtChart.data.datasets[0].data.push(temp);
+        rtChart.update();
+    });
+
+    db.ref("humedad").on("value", snap => {
+        let hum = snap.val();
+        document.getElementById("hum").innerText = hum + " %";
+
+        rtChart.data.datasets[1].data.push(hum);
+        rtChart.update();
+    });
+
+    // ---------------------- GRÁFICO HISTÓRICO -----------------------
+    const historialChart = new Chart(document.getElementById("chartHistorial"), {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Temperatura (°C)",
+                    data: [],
+                    borderColor: "#e74c3c",
+                    backgroundColor: "rgba(231,76,60,0.2)",
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: "Humedad (%)",
+                    data: [],
+                    borderColor: "#3498db",
+                    backgroundColor: "rgba(52,152,219,0.2)",
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: { responsive: true }
+    });
+
+    // ---------------------- Cargar historial según fecha -----------------------
+    function cargarHistorial() {
+        let fecha = document.getElementById("fechaSeleccion").value;
+        if (!fecha) return;
+
+        db.ref("historial/" + fecha).once("value", snap => {
+            const data = snap.val();
+            if (!data) {
+                alert("No hay datos para esta fecha.");
+                return;
             }
+
+            let horas = [];
+            let temps = [];
+            let hums = [];
+
+            Object.keys(data).forEach(hora => {
+                horas.push(hora);
+                temps.push(data[hora].temperatura);
+                hums.push(data[hora].humedad);
+            });
+
+            historialChart.data.labels = horas;
+            historialChart.data.datasets[0].data = temps;
+            historialChart.data.datasets[1].data = hums;
+            historialChart.update();
         });
-
-        // --------------- Lectura en tiempo real ------------------
-
-        db.ref("temperatura").on("value", (snapshot) => {
-            const temp = snapshot.val();
-            document.getElementById("temp").innerText = temp + " °C";
-
-            const hora = new Date().toLocaleTimeString();
-
-            chart.data.labels.push(hora);
-            chart.data.datasets[0].data.push(temp);
-            chart.update();
-        });
-
-        db.ref("humedad").on("value", (snapshot) => {
-            const hum = snapshot.val();
-            document.getElementById("hum").innerText = hum + " %";
-
-            chart.data.datasets[1].data.push(hum);
-            chart.update();
-        });
-
-    </script>
+    }
+</script>
 
 </body>
 </html>
+
 
