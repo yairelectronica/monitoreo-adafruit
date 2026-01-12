@@ -1,233 +1,757 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard PIC – Firebase</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChapsClim</title>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-    body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 15px;
-            background-color: #104554;
-            background-image: url(https://cdn.pixabay.com/photo/2013/10/16/10/17/clouds-196230_1280.jpg);
-            background-size: cover;
-            background-position: center;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            padding-top: 50px;
+    <style>
+        :root {
+            --primary-color: #104554;
+            --secondary-color: #1a6b7a;
+            --temp-color: #e74c3c;
+            --hum-color: #3498db;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
 
-    h1 { color: #2c3e50; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .contenedor {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-        margin-top: 20px;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a2e38 0%, #104554 50%, #1a6b7a 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-    .card {
-        width: 250px;
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.15);
-    }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-    .valor {
-        font-size: 40px;
-        margin-top: 10px;
-        font-weight: bold;
-    }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            padding: 20px 0;
+        }
 
-    .panel {
-        margin: 40px auto;
-        width: 95%;
-        max-width: 900px;
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
-    }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
 
-    .selector-fecha {
-        margin: 10px 0;
-        font-size: 18px;
-        padding: 8px;
-    }
-</style>
+        header h3 {
+            font-weight: 400;
+            opacity: 0.9;
+        }
 
+        .current-data-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 300px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .data-card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .value-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .temp-card .value-display {
+            color: var(--temp-color);
+        }
+
+        .hum-card .value-display {
+            color: var(--hum-color);
+        }
+
+        .last-update {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 15px;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-header h2 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .realtime-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .history-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+        }
+
+        .history-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .history-header h2 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .date-selector label {
+            font-weight: 500;
+        }
+
+        #fechaSeleccion {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+
+        .history-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .history-chart-container {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+
+        .status-disconnected {
+            background-color: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container, .data-card {
+                width: 100%;
+            }
+            
+            .history-charts {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>ChapsClim</h1>
+            <h3>Monitoreo en tiempo real <span id="connectionStatus"><span class="status-indicator status-connected"></span>Conectado</span></h3>
+        </header>
 
-<h1>Dashboard de Temperatura y Humedad</h1>
-<h3>Datos en tiempo real desde Firebase</h3>
+        <section class="current-data-section">
+            <div class="data-card temp-card">
+                <h2><span>🌡️</span> Temperatura Actual</h2>
+                <div id="temp" class="value-display">-- °C</div>
+                <div class="last-update">Última actualización: <span id="tempTime">--:--:--</span></div>
+            </div>
 
-<div class="contenedor">
-    <div class="card">
-        <h2>🌡 Temperatura</h2>
-        <div id="temp" class="valor">-- °C</div>
+            <div class="data-card hum-card">
+                <h2><span>💧</span> Humedad Actual</h2>
+                <div id="hum" class="value-display">-- %</div>
+                <div class="last-update">Última actualización: <span id="humTime">--:--:--</span></div>
+            </div>
+        </section>
+
+        <section class="charts-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2><span>📈</span> Temperatura en Tiempo Real</h2>
+                    <div class="realtime-controls">
+                        <button id="clearTempChart" class="control-btn">Limpiar Gráfica</button>
+                        <span id="tempDataPoints">0 datos</span>
+                    </div>
+                </div>
+                <canvas id="chartTempRealtime"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2><span>📊</span> Humedad en Tiempo Real</h2>
+                    <div class="realtime-controls">
+                        <button id="clearHumChart" class="control-btn">Limpiar Gráfica</button>
+                        <span id="humDataPoints">0 datos</span>
+                    </div>
+                </div>
+                <canvas id="chartHumRealtime"></canvas>
+            </div>
+        </section>
+
+        <section class="history-section">
+            <div class="history-header">
+                <h2><span>📅</span> Historial por Día</h2>
+                <div class="date-selector">
+                    <label for="fechaSeleccion">Seleccionar fecha:</label>
+                    <input type="date" id="fechaSeleccion" onchange="cargarHistorial()">
+                </div>
+            </div>
+            
+            <div class="history-charts">
+                <div class="history-chart-container">
+                    <h3 style="margin-bottom: 15px; color: var(--temp-color);">📈 Temperatura Histórica</h3>
+                    <canvas id="chartTempHistorial"></canvas>
+                </div>
+                
+                <div class="history-chart-container">
+                    <h3 style="margin-bottom: 15px; color: var(--hum-color);">📊 Humedad Histórica</h3>
+                    <canvas id="chartHumHistorial"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Dashboard de Monitoreo PIC - Firebase | Datos en tiempo real</p>
+        </footer>
     </div>
 
-    <div class="card">
-        <h2>💧 Humedad</h2>
-        <div id="hum" class="valor">-- %</div>
-    </div>
-</div>
+    <script>
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWbcsCe8tnVR1o5cG3hJHEGs4aTeegRKU",
+            authDomain: "databasepic-a8977.firebaseapp.com",
+            databaseURL: "https://databasepic-a8977-default-rtdb.firebaseio.com",
+            projectId: "databasepic-a8977",
+            storageBucket: "databasepic-a8977.firebasestorage.app",
+            messagingSenderId: "890321833852",
+            appId: "1:890321833852:web:0904650852e0ecd1d9def9"
+        };
 
-<!-- GRÁFICO EN TIEMPO REAL -->
-<div class="panel">
-    <h2>📊 Gráfico en Tiempo Real</h2>
-    <canvas id="chartRealtime"></canvas>
-</div>
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        
+        // Variables para control de datos
+        let maxDataPoints = 50;
+        let tempDataPoints = 0;
+        let humDataPoints = 0;
 
-<!-- SELECTOR DE FECHA -->
-<div class="panel">
-    <h2>📅 Ver historial por día</h2>
-    <input type="date" id="fechaSeleccion" class="selector-fecha" onchange="cargarHistorial()">
-</div>
-
-<!-- GRÁFICO DE HISTORIAL -->
-<div class="panel">
-    <h2>📊 Historial del Día Seleccionado</h2>
-    <canvas id="chartHistorial"></canvas>
-</div>
-
-<script>
-    // Configuración Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyCWbcsCe8tnVR1o5cG3hJHEGs4aTeegRKU",
-        authDomain: "databasepic-a8977.firebaseapp.com",
-        databaseURL: "https://databasepic-a8977-default-rtdb.firebaseio.com",
-        projectId: "databasepic-a8977",
-        storageBucket: "databasepic-a8977.firebasestorage.app",
-        messagingSenderId: "890321833852",
-        appId: "1:890321833852:web:0904650852e0ecd1d9def9"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ---------------------- GRÁFICO EN TIEMPO REAL -----------------------
-    const rtChart = new Chart(document.getElementById("chartRealtime"), {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [
-                {
+        // ---------------------- GRÁFICO TEMPERATURA TIEMPO REAL -----------------------
+        const tempChart = new Chart(document.getElementById("chartTempRealtime"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
                     label: "Temperatura (°C)",
                     data: [],
                     borderColor: "#e74c3c",
-                    backgroundColor: "rgba(231,76,60,0.2)",
+                    backgroundColor: "rgba(231, 76, 60, 0.1)",
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: "#e74c3c",
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
                 },
-                {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora'
+                        },
+                        grid: {
+                            display: true,
+                            color: "rgba(0,0,0,0.05)"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Temperatura (°C)'
+                        },
+                        min: 0,
+                        max: 50,
+                        grid: {
+                            display: true,
+                            color: "rgba(0,0,0,0.05)"
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
+                }
+            }
+        });
+
+        // ---------------------- GRÁFICO HUMEDAD TIEMPO REAL -----------------------
+        const humChart = new Chart(document.getElementById("chartHumRealtime"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
                     label: "Humedad (%)",
                     data: [],
                     borderColor: "#3498db",
-                    backgroundColor: "rgba(52,152,219,0.2)",
+                    backgroundColor: "rgba(52, 152, 219, 0.1)",
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: "#3498db",
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora'
+                        },
+                        grid: {
+                            display: true,
+                            color: "rgba(0,0,0,0.05)"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Humedad (%)'
+                        },
+                        min: 0,
+                        max: 100,
+                        grid: {
+                            display: true,
+                            color: "rgba(0,0,0,0.05)"
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
                 }
-            ]
-        },
-        options: { responsive: true }
-    });
+            }
+        });
 
-    // ---------------------- LECTURA EN TIEMPO REAL -----------------------
-    db.ref("Actual/temperatura").on("value", snap => {
-        let temp = snap.val();
-        document.getElementById("temp").innerText = temp + " °C";
+        // ---------------------- LECTURA EN TIEMPO REAL -----------------------
+        db.ref("Actual/temperatura").on("value", snap => {
+            let temp = snap.val();
+            if (temp !== null) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('es-ES');
+                
+                // Actualizar valor en tarjeta
+                document.getElementById("temp").innerText = temp.toFixed(1) + " °C";
+                document.getElementById("tempTime").innerText = timeString;
+                
+                // Actualizar gráfico de temperatura
+                tempChart.data.labels.push(timeString);
+                tempChart.data.datasets[0].data.push(temp);
+                
+                // Limitar puntos de datos
+                if (tempChart.data.labels.length > maxDataPoints) {
+                    tempChart.data.labels.shift();
+                    tempChart.data.datasets[0].data.shift();
+                }
+                
+                tempChart.update();
+                
+                // Actualizar contador
+                tempDataPoints++;
+                document.getElementById("tempDataPoints").innerText = tempDataPoints + " datos";
+            }
+        });
 
-        let hora = new Date().toLocaleTimeString();
-        rtChart.data.labels.push(hora);
-        rtChart.data.datasets[0].data.push(temp);
-        rtChart.update();
-    });
+        db.ref("Actual/humedad").on("value", snap => {
+            let hum = snap.val();
+            if (hum !== null) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('es-ES');
+                
+                // Actualizar valor en tarjeta
+                document.getElementById("hum").innerText = hum.toFixed(1) + " %";
+                document.getElementById("humTime").innerText = timeString;
+                
+                // Actualizar gráfico de humedad
+                humChart.data.labels.push(timeString);
+                humChart.data.datasets[0].data.push(hum);
+                
+                // Limitar puntos de datos
+                if (humChart.data.labels.length > maxDataPoints) {
+                    humChart.data.labels.shift();
+                    humChart.data.datasets[0].data.shift();
+                }
+                
+                humChart.update();
+                
+                // Actualizar contador
+                humDataPoints++;
+                document.getElementById("humDataPoints").innerText = humDataPoints + " datos";
+            }
+        });
 
-    db.ref("Actual/humedad").on("value", snap => {
-        let hum = snap.val();
-        document.getElementById("hum").innerText = hum + " %";
-
-        rtChart.data.datasets[1].data.push(hum);
-        rtChart.update();
-    });
-
-    // ---------------------- GRÁFICO HISTÓRICO -----------------------
-    const historialChart = new Chart(document.getElementById("chartHistorial"), {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [
-                {
+        // ---------------------- GRÁFICOS HISTÓRICOS -----------------------
+        const tempHistorialChart = new Chart(document.getElementById("chartTempHistorial"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
                     label: "Temperatura (°C)",
                     data: [],
                     borderColor: "#e74c3c",
-                    backgroundColor: "rgba(231,76,60,0.2)",
+                    backgroundColor: "rgba(231, 76, 60, 0.1)",
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: "#e74c3c",
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
                 },
-                {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora del día'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Temperatura (°C)'
+                        },
+                        min: 0,
+                        max: 50
+                    }
+                }
+            }
+        });
+
+        const humHistorialChart = new Chart(document.getElementById("chartHumHistorial"), {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [{
                     label: "Humedad (%)",
                     data: [],
                     borderColor: "#3498db",
-                    backgroundColor: "rgba(52,152,219,0.2)",
+                    backgroundColor: "rgba(52, 152, 219, 0.1)",
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.3,
+                    pointBackgroundColor: "#3498db",
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hora del día'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Humedad (%)'
+                        },
+                        min: 0,
+                        max: 100
+                    }
                 }
-            ]
-        },
-        options: { responsive: true }
-    });
+            }
+        });
 
-    // ---------------------- Cargar historial según fecha -----------------------
-    function cargarHistorial() {
-        let fecha = document.getElementById("fechaSeleccion").value;
-        if (!fecha) return;
-
-        let partes = fecha.split("-");
-        let ruta = `Historial/${partes[0]}/${partes[1]}/${partes[2]}`;
-
-        db.ref(ruta).once("value", snap => {
-            const data = snap.val();
-            if (!data) {
-                alert("No hay datos para esta fecha.");
+        // ---------------------- Cargar historial según fecha -----------------------
+        function cargarHistorial() {
+            let fecha = document.getElementById("fechaSeleccion").value;
+            if (!fecha) {
+                alert("Por favor, selecciona una fecha.");
                 return;
             }
 
-            let horas = [];
-            let temps = [];
-            let hums = [];
+            let partes = fecha.split("-");
+            let ruta = `Historial/${partes[0]}/${partes[1]}/${partes[2]}`;
+            
+            // Mostrar indicador de carga
+            tempHistorialChart.data.labels = ["Cargando..."];
+            tempHistorialChart.data.datasets[0].data = [0];
+            tempHistorialChart.update();
+            
+            humHistorialChart.data.labels = ["Cargando..."];
+            humHistorialChart.data.datasets[0].data = [0];
+            humHistorialChart.update();
 
-            Object.keys(data).forEach(hora => {
-                horas.push(hora);
-                temps.push(data[hora].temperatura);
-                hums.push(data[hora].humedad);
+            db.ref(ruta).once("value", snap => {
+                const data = snap.val();
+                
+                if (!data) {
+                    alert("No hay datos para esta fecha.");
+                    
+                    // Limpiar gráficos
+                    tempHistorialChart.data.labels = [];
+                    tempHistorialChart.data.datasets[0].data = [];
+                    tempHistorialChart.update();
+                    
+                    humHistorialChart.data.labels = [];
+                    humHistorialChart.data.datasets[0].data = [];
+                    humHistorialChart.update();
+                    
+                    return;
+                }
+
+                let horas = [];
+                let temps = [];
+                let hums = [];
+
+                // Ordenar las horas
+                Object.keys(data).sort().forEach(hora => {
+                    horas.push(hora);
+                    temps.push(data[hora].temperatura);
+                    hums.push(data[hora].humedad);
+                });
+
+                // Actualizar gráfico de temperatura histórica
+                tempHistorialChart.data.labels = horas;
+                tempHistorialChart.data.datasets[0].data = temps;
+                tempHistorialChart.update();
+
+                // Actualizar gráfico de humedad histórica
+                humHistorialChart.data.labels = horas;
+                humHistorialChart.data.datasets[0].data = hums;
+                humHistorialChart.update();
+            }).catch(error => {
+                console.error("Error al cargar datos históricos:", error);
+                alert("Error al cargar los datos históricos.");
             });
+        }
 
-            historialChart.data.labels = horas;
-            historialChart.data.datasets[0].data = temps;
-            historialChart.data.datasets[1].data = hums;
-            historialChart.update();
+        // ---------------------- Funciones de control -----------------------
+        document.getElementById("clearTempChart").addEventListener("click", function() {
+            tempChart.data.labels = [];
+            tempChart.data.datasets[0].data = [];
+            tempChart.update();
+            tempDataPoints = 0;
+            document.getElementById("tempDataPoints").innerText = "0 datos";
         });
-    }
-</script>
 
+        document.getElementById("clearHumChart").addEventListener("click", function() {
+            humChart.data.labels = [];
+            humChart.data.datasets[0].data = [];
+            humChart.update();
+            humDataPoints = 0;
+            document.getElementById("humDataPoints").innerText = "0 datos";
+        });
+
+        // Establecer fecha por defecto en el selector (hoy)
+        const today = new Date();
+        const todayFormatted = today.toISOString().split('T')[0];
+        document.getElementById("fechaSeleccion").value = todayFormatted;
+        
+        // Cargar datos históricos del día actual al inicio
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                cargarHistorial();
+            }, 1000);
+        });
+
+        // Manejo de conexión/desconexión de Firebase
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", function(snap) {
+            const statusElement = document.getElementById("connectionStatus");
+            const indicator = statusElement.querySelector(".status-indicator");
+            
+            if (snap.val() === true) {
+                indicator.className = "status-indicator status-connected";
+                statusElement.innerHTML = '<span class="status-indicator status-connected"></span>Conectado';
+            } else {
+                indicator.className = "status-indicator status-disconnected";
+                statusElement.innerHTML = '<span class="status-indicator status-disconnected"></span>Desconectado';
+            }
+        });
+    </script>
 </body>
 </html>
 
